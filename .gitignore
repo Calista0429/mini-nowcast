@@ -8,3 +8,5 @@ dbt/dbt_packages/
 __pycache__/
 *.pyc
 dbt/.user.yml
+node_modules/
+package-lock.json
