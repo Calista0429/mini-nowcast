@@ -20,6 +20,8 @@ const INK = "232A36";
 const INK_MUTED = "636C7C";
 const ACCENT = "EB6834";
 const CARD = "F2F4F7";
+const CARD_DEEP = "E6EAF0";  // emphasis tint, replaces the old dark fills
+const HL = "FBEDE6";         // accent tint for "what I built" / the highlighted step
 
 const HEAD = "Yu Gothic"; // ships with Office on Windows and Mac
 const BODY = "Yu Gothic";
@@ -41,20 +43,20 @@ const numberCircle = (slide, n, x, y, color = NAVY) => {
 
 /* ---------------------------------------------------------------- Slide 1 */
 const s1 = pres.addSlide();
-s1.background = { color: NAVY };
+s1.background = { color: WHITE };
 
 s1.addText("つくったもの", {
   x: 0.7, y: 0.5, w: 5.0, h: 0.35, isTextBox: true, margin: 0,
-  fontFace: BODY, fontSize: 16, color: ICE_DEEP, charSpacing: 2,
+  fontFace: BODY, fontSize: 16, color: INK_MUTED, charSpacing: 2,
 });
 
 s1.addText(
   [
-    { text: "購買データ", options: { color: WHITE, bold: true } },
-    { text: "から物価の動きを毎日測り、", options: { color: ICE, breakLine: true } },
-    { text: "そのデータに", options: { color: ICE } },
-    { text: "日本語で質問できる", options: { color: WHITE, bold: true } },
-    { text: "しくみ", options: { color: ICE } },
+    { text: "購買データ", options: { color: INK, bold: true } },
+    { text: "から物価の動きを毎日測り、", options: { color: INK_MUTED, breakLine: true } },
+    { text: "そのデータに", options: { color: INK_MUTED } },
+    { text: "日本語で質問できる", options: { color: INK, bold: true } },
+    { text: "しくみ", options: { color: INK_MUTED } },
   ],
   {
     x: 0.7, y: 1.0, w: 12.0, h: 1.45, isTextBox: true, margin: 0,
@@ -72,15 +74,15 @@ stats.forEach((s, i) => {
   const x = 0.7 + i * 4.05;
   s1.addShape(pres.ShapeType.roundRect, {
     x, y: 2.75, w: 3.7, h: 1.45, rectRadius: 0.12,
-    fill: { color: NAVY_SOFT },
+    fill: { color: CARD },
   });
   s1.addText(s.v, {
     x: x + 0.3, y: 2.92, w: 3.1, h: 0.68, isTextBox: true, margin: 0,
-    fontFace: HEAD, fontSize: 36, bold: true, color: WHITE,
+    fontFace: HEAD, fontSize: 36, bold: true, color: INK,
   });
   s1.addText(s.l, {
     x: x + 0.3, y: 3.6, w: 3.15, h: 0.45, isTextBox: true, margin: 0,
-    fontFace: BODY, fontSize: 12, color: ICE_DEEP,
+    fontFace: BODY, fontSize: 12, color: INK_MUTED,
   });
 });
 
@@ -92,7 +94,7 @@ s1.addImage({
 
 s1.addText("Python / SQL / DuckDB / dbt / Streamlit / 生成AI（LLM）", {
   x: 0.7, y: 6.75, w: 11.9, h: 0.3, isTextBox: true, margin: 0,
-  fontFace: BODY, fontSize: 11, color: ICE_DEEP,
+  fontFace: BODY, fontSize: 11, color: INK_MUTED,
 });
 
 s1.addNotes(
@@ -161,15 +163,15 @@ rows.forEach((r, i) => {
   });
 
   s2.addShape(pres.ShapeType.roundRect, {
-    x: 7.3, y, w: 5.3, h: 1.65, rectRadius: 0.1, fill: { color: NAVY },
+    x: 7.3, y, w: 5.3, h: 1.65, rectRadius: 0.1, fill: { color: HL },
   });
   s2.addText(r.right, {
     x: 7.55, y: y + 0.25, w: 4.8, h: 0.4, isTextBox: true, margin: 0,
-    fontFace: BODY, fontSize: 16, bold: true, color: WHITE,
+    fontFace: BODY, fontSize: 16, bold: true, color: INK,
   });
   s2.addText(r.rightSub, {
     x: 7.55, y: y + 0.72, w: 4.8, h: 0.7, isTextBox: true, margin: 0,
-    fontFace: BODY, fontSize: 13, color: ICE,
+    fontFace: BODY, fontSize: 13, color: INK_MUTED,
   });
 });
 
@@ -241,18 +243,18 @@ s3.addImage({
 });
 
 s3.addShape(pres.ShapeType.roundRect, {
-  x: 6.95, y: 3.3, w: 5.65, h: 2.9, rectRadius: 0.1, fill: { color: NAVY },
+  x: 6.95, y: 3.3, w: 5.65, h: 2.9, rectRadius: 0.1, fill: { color: HL },
 });
 s3.addText("インターンでやりたいこと", {
   x: 7.23, y: 3.58, w: 5.1, h: 0.3, isTextBox: true, margin: 0,
-  fontFace: BODY, fontSize: 13, bold: true, color: ICE_DEEP,
+  fontFace: BODY, fontSize: 13, bold: true, color: ACCENT,
 });
 s3.addText(
   "実データを使って、Python・SQL・生成AIで手を動かしたいです。\n" +
   "地道な確認作業も含めて、最後までやり切ることを大事にしています。",
   {
     x: 7.23, y: 4.05, w: 5.1, h: 2.0, isTextBox: true, margin: 0,
-    fontFace: BODY, fontSize: 13.5, color: WHITE, lineSpacing: 22,
+    fontFace: BODY, fontSize: 13.5, color: INK, lineSpacing: 22,
   }
 );
 

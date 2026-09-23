@@ -19,6 +19,8 @@ const INK = "232A36";
 const INK_MUTED = "636C7C";
 const ACCENT = "EB6834";
 const CARD = "F2F4F7";
+const CARD_DEEP = "E6EAF0";  // emphasis tint, replaces the old dark fills
+const HL = "FBEDE6";         // accent tint for the highlighted step
 const CODE_BG = "EDF0F4";
 
 const HEAD = "Yu Gothic";
@@ -89,7 +91,7 @@ const flow = (slide, { x, y, w, h, steps, boxFill = CARD, textColor = INK }) => 
     });
     if (i < steps.length - 1) {
       slide.addShape(pres.ShapeType.rightArrow, {
-        x: bx + bw + 0.045, y: y + h / 2 - 0.1, w: 0.21, h: 0.2, fill: { color: ICE_DEEP },
+        x: bx + bw + 0.045, y: y + h / 2 - 0.1, w: 0.21, h: 0.2, fill: { color: NAVY_SOFT },
       });
     }
   });
@@ -97,19 +99,19 @@ const flow = (slide, { x, y, w, h, steps, boxFill = CARD, textColor = INK }) => 
 
 /* ------------------------------------------------------------- 1. 全体像 */
 const s1 = pres.addSlide();
-s1.background = { color: NAVY };
+s1.background = { color: WHITE };
 
 s1.addText("Mini Nowcast ｜ 技術資料", {
   x: 0.6, y: 0.42, w: 8, h: 0.28, isTextBox: true, margin: 0,
-  fontFace: BODY, fontSize: 12, bold: true, color: ICE_DEEP, charSpacing: 1,
+  fontFace: BODY, fontSize: 12, bold: true, color: INK_MUTED, charSpacing: 1,
 });
 s1.addText("アーキテクチャ", {
   x: 0.6, y: 0.72, w: 12.1, h: 0.55, isTextBox: true, margin: 0,
-  fontFace: HEAD, fontSize: 28, bold: true, color: WHITE,
+  fontFace: HEAD, fontSize: 28, bold: true, color: INK,
 });
 
 // --- band helper: a labelled row of boxes ---------------------------------
-const band = (y, label, boxes, { h = 1.0, labelColor = ICE_DEEP, arrows = true } = {}) => {
+const band = (y, label, boxes, { h = 1.0, labelColor = INK_MUTED, arrows = true } = {}) => {
   s1.addText(label, {
     x: 0.6, y: y + h / 2 - 0.16, w: 1.5, h: 0.32, isTextBox: true, margin: 0,
     fontFace: BODY, fontSize: 11.5, bold: true, color: labelColor,
@@ -122,19 +124,19 @@ const band = (y, label, boxes, { h = 1.0, labelColor = ICE_DEEP, arrows = true }
     const bx = x0 + i * (bw + gap);
     s1.addShape(pres.ShapeType.roundRect, {
       x: bx, y, w: bw, h, rectRadius: 0.08,
-      fill: { color: b.highlight ? ICE : NAVY_SOFT },
+      fill: { color: b.highlight ? HL : CARD },
     });
     s1.addText(b.t, {
       x: bx + 0.16, y: y + 0.13, w: bw - 0.32, h: 0.26, isTextBox: true, margin: 0,
-      fontFace: BODY, fontSize: 11.5, bold: true, color: b.highlight ? NAVY : WHITE,
+      fontFace: BODY, fontSize: 11.5, bold: true, color: b.highlight ? ACCENT : INK,
     });
     s1.addText(b.s, {
       x: bx + 0.16, y: y + 0.42, w: bw - 0.32, h: h - 0.52, isTextBox: true, margin: 0,
-      fontFace: BODY, fontSize: 9.5, color: b.highlight ? NAVY : ICE, lineSpacing: 13,
+      fontFace: BODY, fontSize: 9.5, color: INK_MUTED, lineSpacing: 13,
     });
     if (arrows && i < boxes.length - 1) {  // the output row is parallel, not sequential
       s1.addShape(pres.ShapeType.rightArrow, {
-        x: bx + bw + 0.035, y: y + h / 2 - 0.09, w: 0.19, h: 0.18, fill: { color: ICE_DEEP },
+        x: bx + bw + 0.035, y: y + h / 2 - 0.09, w: 0.19, h: 0.18, fill: { color: NAVY_SOFT },
       });
     }
   });
@@ -142,12 +144,12 @@ const band = (y, label, boxes, { h = 1.0, labelColor = ICE_DEEP, arrows = true }
 
 const downArrow = (y, note) => {
   s1.addShape(pres.ShapeType.downArrow, {
-    x: 7.2, y, w: 0.18, h: 0.26, fill: { color: ICE_DEEP },
+    x: 7.2, y, w: 0.18, h: 0.26, fill: { color: NAVY_SOFT },
   });
   if (note) {
     s1.addText(note, {
       x: 7.6, y: y - 0.02, w: 5.1, h: 0.3, isTextBox: true, margin: 0,
-      fontFace: BODY, fontSize: 9.5, color: ICE_DEEP,
+      fontFace: BODY, fontSize: 9.5, color: INK_MUTED,
     });
   }
 };
@@ -173,14 +175,14 @@ band(4.65, "③ 出力", [
 
 s1.addText("技術スタック", {
   x: 0.6, y: 6.2, w: 2.0, h: 0.28, isTextBox: true, margin: 0,
-  fontFace: BODY, fontSize: 11.5, bold: true, color: ICE_DEEP,
+  fontFace: BODY, fontSize: 11.5, bold: true, color: INK_MUTED,
 });
 s1.addText(
   "Python 3.12 / uv　・　DuckDB 1.5　・　dbt 1.12（dbt-duckdb, macro / seed / test）　・　Streamlit + Plotly　・　" +
   "sqlglot（SQL 構文木検査）　・　pytest 26 件　・　OpenAI 互換 LLM API（DeepSeek / OpenAI / Ollama を環境変数で切替）",
   {
     x: 2.15, y: 6.18, w: 10.55, h: 0.6, isTextBox: true, margin: 0,
-    fontFace: BODY, fontSize: 10, color: ICE, lineSpacing: 16,
+    fontFace: BODY, fontSize: 10, color: INK, lineSpacing: 16,
   }
 );
 
@@ -389,7 +391,7 @@ flow(s5, {
     { title: "構文木で検査", sub: "sqlglot\nホワイトリスト" },
     { title: "read_only 実行", sub: "外部アクセス無効\nエンジン側の防御" },
     { title: "回答生成", sub: "結果の行だけを\n根拠にさせる" },
-    { title: "数値照合", sub: "引用値を結果と突合\n不一致は ⚠ 表示", fill: ICE, color: NAVY, subColor: NAVY },
+    { title: "数値照合", sub: "引用値を結果と突合\n不一致は ⚠ 表示", fill: HL, color: ACCENT, subColor: INK },
   ],
 });
 
@@ -425,14 +427,14 @@ const metrics = [
 ];
 metrics.forEach((m, i) => {
   const x = 0.6 + i * 4.09;
-  s6.addShape(pres.ShapeType.roundRect, { x, y: 1.5, w: 3.92, h: 1.7, rectRadius: 0.08, fill: { color: NAVY } });
+  s6.addShape(pres.ShapeType.roundRect, { x, y: 1.5, w: 3.92, h: 1.7, rectRadius: 0.08, fill: { color: CARD_DEEP } });
   s6.addText(m.v, {
     x: x + 0.24, y: 1.66, w: 3.44, h: 0.5, isTextBox: true, margin: 0,
-    fontFace: HEAD, fontSize: 26, bold: true, color: WHITE,
+    fontFace: HEAD, fontSize: 26, bold: true, color: INK,
   });
   s6.addText(m.l, {
     x: x + 0.24, y: 2.18, w: 3.44, h: 0.95, isTextBox: true, margin: 0,
-    fontFace: BODY, fontSize: 10, color: ICE, lineSpacing: 14,
+    fontFace: BODY, fontSize: 10, color: INK_MUTED, lineSpacing: 14,
   });
 });
 
