@@ -10,16 +10,16 @@ const ROOT = path.resolve(__dirname, "..");
 const OUT = process.argv[2] || path.join(ROOT, "docs", "mini-nowcast-engineering.pptx");
 const ASSETS = path.join(ROOT, "docs", "deck-assets");
 
-const NAVY = "1E2761";
-const NAVY_SOFT = "2E3C7A";
-const ICE = "CADCFC";
-const ICE_DEEP = "8FB3E8";
+const NAVY = "434E60";      // slate, replaces the earlier navy
+const NAVY_SOFT = "556175";
+const ICE = "DCE2EA";
+const ICE_DEEP = "AEBACB";
 const WHITE = "FFFFFF";
-const INK = "16203F";
-const INK_MUTED = "5B6485";
+const INK = "232A36";
+const INK_MUTED = "636C7C";
 const ACCENT = "EB6834";
-const CARD = "F4F7FD";
-const CODE_BG = "EEF2FB";
+const CARD = "F2F4F7";
+const CODE_BG = "EDF0F4";
 
 const HEAD = "Yu Gothic";
 const BODY = "Yu Gothic";
@@ -103,61 +103,86 @@ s1.addText("Mini Nowcast ｜ 技術資料", {
   x: 0.6, y: 0.42, w: 8, h: 0.28, isTextBox: true, margin: 0,
   fontFace: BODY, fontSize: 12, bold: true, color: ICE_DEEP, charSpacing: 1,
 });
-s1.addText("全体像と技術選定", {
+s1.addText("アーキテクチャ", {
   x: 0.6, y: 0.72, w: 12.1, h: 0.55, isTextBox: true, margin: 0,
   fontFace: HEAD, fontSize: 28, bold: true, color: WHITE,
 });
-s1.addText("購買データ（UCI Online Retail II, 英国小売 2年分）から物価指数をつくり、そのデータに自然言語で質問できるようにした小さなデータ基盤です。", {
-  x: 0.6, y: 1.35, w: 12.1, h: 0.3, isTextBox: true, margin: 0,
-  fontFace: BODY, fontSize: 12.5, color: ICE,
-});
 
-flow(s1, {
-  x: 0.6, y: 1.95, w: 12.1, h: 1.35,
-  steps: [
-    { title: "xlsx", sub: "1,067,371 行\n公開データ", fill: NAVY_SOFT, color: WHITE, subColor: ICE },
-    { title: "ingest（Python）", sub: "Parquet 化 → DuckDB\n取込行数をログに記録", fill: NAVY_SOFT, color: WHITE, subColor: ICE },
-    { title: "dbt", sub: "staging → intermediate → marts\n16 モデル / 28 テスト", fill: ICE, color: NAVY, subColor: NAVY },
-    { title: "DuckDB", sub: "raw / ref / intermediate / marts\n166 MB・単一ファイル", fill: NAVY_SOFT, color: WHITE, subColor: ICE },
-    { title: "Streamlit / AI", sub: "ダッシュボード\n自然言語アシスタント", fill: NAVY_SOFT, color: WHITE, subColor: ICE },
-  ],
-});
+// --- band helper: a labelled row of boxes ---------------------------------
+const band = (y, label, boxes, { h = 1.0, labelColor = ICE_DEEP, arrows = true } = {}) => {
+  s1.addText(label, {
+    x: 0.6, y: y + h / 2 - 0.16, w: 1.5, h: 0.32, isTextBox: true, margin: 0,
+    fontFace: BODY, fontSize: 11.5, bold: true, color: labelColor,
+  });
+  const x0 = 2.15;
+  const total = 10.55;
+  const gap = 0.26;
+  const bw = (total - gap * (boxes.length - 1)) / boxes.length;
+  boxes.forEach((b, i) => {
+    const bx = x0 + i * (bw + gap);
+    s1.addShape(pres.ShapeType.roundRect, {
+      x: bx, y, w: bw, h, rectRadius: 0.08,
+      fill: { color: b.highlight ? ICE : NAVY_SOFT },
+    });
+    s1.addText(b.t, {
+      x: bx + 0.16, y: y + 0.13, w: bw - 0.32, h: 0.26, isTextBox: true, margin: 0,
+      fontFace: BODY, fontSize: 11.5, bold: true, color: b.highlight ? NAVY : WHITE,
+    });
+    s1.addText(b.s, {
+      x: bx + 0.16, y: y + 0.42, w: bw - 0.32, h: h - 0.52, isTextBox: true, margin: 0,
+      fontFace: BODY, fontSize: 9.5, color: b.highlight ? NAVY : ICE, lineSpacing: 13,
+    });
+    if (arrows && i < boxes.length - 1) {  // the output row is parallel, not sequential
+      s1.addShape(pres.ShapeType.rightArrow, {
+        x: bx + bw + 0.035, y: y + h / 2 - 0.09, w: 0.19, h: 0.18, fill: { color: ICE_DEEP },
+      });
+    }
+  });
+};
 
-const choices = [
-  {
-    t: "DuckDB",
-    b: "ゼロ依存・単一ファイルで、clone 後すぐ再現できる。列指向で 104 万行の集計が 11 ms、全量再構築は 18.5 秒。" +
-       "アシスタントには read_only かつ外部ファイルアクセス無効の接続を渡し、エンジン側の安全境界として使う。",
-  },
-  {
-    t: "dbt",
-    b: "ref() で依存 DAG を自動決定。Törnqvist の計算式は macro 1 本にまとめ、日次・月次・カテゴリ別・月接続の 4 モデルで再利用。" +
-       "profiles の target を切り替えれば同じモデルを Snowflake でも実行できる構成（本番未検証）。",
-  },
-  {
-    t: "LLM は OpenAI 互換 API",
-    b: "function calling を使わない設計にしたため、provider を選ばない。DeepSeek / OpenAI / ローカル Ollama などを環境変数 3 つで差し替え可能。",
-  },
-];
-choices.forEach((c, i) => {
-  const x = 0.6 + i * 4.09;
-  s1.addShape(pres.ShapeType.roundRect, {
-    x, y: 3.65, w: 3.92, h: 2.5, rectRadius: 0.08, fill: { color: NAVY_SOFT },
+const downArrow = (y, note) => {
+  s1.addShape(pres.ShapeType.downArrow, {
+    x: 7.2, y, w: 0.18, h: 0.26, fill: { color: ICE_DEEP },
   });
-  s1.addText(c.t, {
-    x: x + 0.24, y: 3.85, w: 3.44, h: 0.3, isTextBox: true, margin: 0,
-    fontFace: BODY, fontSize: 14, bold: true, color: WHITE,
-  });
-  s1.addText(c.b, {
-    x: x + 0.24, y: 4.22, w: 3.44, h: 1.8, isTextBox: true, margin: 0,
-    fontFace: BODY, fontSize: 10.5, color: ICE, lineSpacing: 16,
-  });
-});
+  if (note) {
+    s1.addText(note, {
+      x: 7.6, y: y - 0.02, w: 5.1, h: 0.3, isTextBox: true, margin: 0,
+      fontFace: BODY, fontSize: 9.5, color: ICE_DEEP,
+    });
+  }
+};
 
-s1.addText("Python 3.12 / uv ・ DuckDB 1.5 ・ dbt 1.12（dbt-duckdb）・ Streamlit ・ sqlglot ・ pytest 26 件", {
-  x: 0.6, y: 6.45, w: 12.1, h: 0.3, isTextBox: true, margin: 0,
-  fontFace: BODY, fontSize: 10.5, color: ICE_DEEP,
+band(1.45, "① 取込", [
+  { t: "xlsx（公開データ）", s: "UCI Online Retail II ／ 英国小売 2 年分 ／ 1,067,371 行" },
+  { t: "ingest/load_raw.py", s: "Parquet 化してキャッシュ ／ 取込行数を ingest_log に記録" },
+  { t: "DuckDB : raw", s: "単一ファイル 166 MB ／ 型はソースのまま保持" },
+]);
+downArrow(2.55, "ここから先は SQL（dbt がモデルの依存 DAG を決定：16 モデル）");
+
+band(2.95, "② 変換 (dbt)", [
+  { t: "staging", s: "型変換・列名統一 ／ 2 シート重複（2010-12-01〜09, 22,523 行）を除去" },
+  { t: "intermediate", s: "除外理由を付けて保持 → 商品 × 価格チャネル × 期間の単価を算出" },
+  { t: "marts", s: "物価指数（日次・月次・カテゴリ別）／ 寄与度 ／ 売上 ／ データ品質", highlight: true },
+], { h: 1.15 });
+downArrow(4.25, "28 件の dbt テスト（一般・恒等式・意味層との整合）が全モデルに紐づく");
+
+band(4.65, "③ 出力", [
+  { t: "Streamlit ダッシュボード", s: "物価指数の 3 方式比較 ／ 寄与度 ／ クリーニング内訳 ／ 日次データ量の監視とアラート" },
+  { t: "AI アシスタント", s: "意味層 → SQL 生成 → 構文木で検査 → read_only 実行 → 回答の数値を結果と照合" },
+], { h: 1.15, arrows: false });
+
+s1.addText("技術スタック", {
+  x: 0.6, y: 6.2, w: 2.0, h: 0.28, isTextBox: true, margin: 0,
+  fontFace: BODY, fontSize: 11.5, bold: true, color: ICE_DEEP,
 });
+s1.addText(
+  "Python 3.12 / uv　・　DuckDB 1.5　・　dbt 1.12（dbt-duckdb, macro / seed / test）　・　Streamlit + Plotly　・　" +
+  "sqlglot（SQL 構文木検査）　・　pytest 26 件　・　OpenAI 互換 LLM API（DeepSeek / OpenAI / Ollama を環境変数で切替）",
+  {
+    x: 2.15, y: 6.18, w: 10.55, h: 0.6, isTextBox: true, margin: 0,
+    fontFace: BODY, fontSize: 10, color: ICE, lineSpacing: 16,
+  }
+);
 
 /* --------------------------------------------- 2. 決定①：比較の単位 */
 const s2 = pres.addSlide();
@@ -181,7 +206,7 @@ const rows85 = [
 ];
 s2.addTable(rows85, {
   x: 7.1, y: 1.84, w: 5.6, colW: [2.6, 1.5, 1.5],
-  border: { type: "solid", color: "DCE3F5", pt: 1 },
+  border: { type: "solid", color: "DDE2E9", pt: 1 },
   fill: { color: WHITE },
   fontFace: BODY, fontSize: 11, color: INK, valign: "middle",
   rowH: 0.34, margin: 0.08,
@@ -256,7 +281,7 @@ options.forEach((o, i) => {
   const chosen = o[0] === "c";
   s3.addShape(pres.ShapeType.roundRect, {
     x: 0.6, y, w: 5.6, h: 0.68, rectRadius: 0.06,
-    fill: { color: chosen ? CARD : "FAFBFE" },
+    fill: { color: chosen ? CARD : "FAFBFC" },
   });
   s3.addText(o[0], {
     x: 0.78, y, w: 0.3, h: 0.68, isTextBox: true, margin: 0, valign: "middle",

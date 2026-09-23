@@ -10,16 +10,16 @@ const ROOT = path.resolve(__dirname, "..");
 const OUT = process.argv[2] || path.join(ROOT, "docs", "mini-nowcast-intro.pptx");
 const ASSETS = path.join(ROOT, "docs", "deck-assets"); // crops of docs/screenshots, see crop_deck_assets.py
 
-// Midnight Executive palette + the dashboard's own orange as the single accent.
-const NAVY = "1E2761";
-const NAVY_SOFT = "2E3C7A";
-const ICE = "CADCFC";
-const ICE_DEEP = "8FB3E8";
+// Low-saturation slate palette + the dashboard's own orange as the single accent.
+const NAVY = "434E60";      // slate, replaces the earlier navy
+const NAVY_SOFT = "556175";
+const ICE = "DCE2EA";
+const ICE_DEEP = "AEBACB";
 const WHITE = "FFFFFF";
-const INK = "16203F";
-const INK_MUTED = "5B6485";
+const INK = "232A36";
+const INK_MUTED = "636C7C";
 const ACCENT = "EB6834";
-const CARD = "F4F7FD";
+const CARD = "F2F4F7";
 
 const HEAD = "Yu Gothic"; // ships with Office on Windows and Mac
 const BODY = "Yu Gothic";
