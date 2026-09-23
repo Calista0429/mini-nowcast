@@ -9,6 +9,7 @@ ingest:            ## raw xlsx -> DuckDB raw schema
 
 build:             ## seeds + models + tests, in dependency order
 	$(DBT) build $(DBT_ARGS)
+	@cp dbt/target/run_results.json dbt/target/last_build_results.json  # `dbt docs generate` overwrites run_results.json
 
 test:              ## python unit tests (no network)
 	uv run pytest -q

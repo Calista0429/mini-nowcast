@@ -9,15 +9,28 @@ st.set_page_config(page_title="データ品質", page_icon="🧹", layout="wide"
 st.title("データ品質")
 
 # --- dbt test status ----------------------------------------------------------------------
-run_results = ROOT / "dbt" / "target" / "run_results.json"
-if run_results.exists():
-    results = json.loads(run_results.read_text())["results"]
-    tests = [r for r in results if r["unique_id"].startswith("test.")]
-    failed = [r for r in tests if r["status"] != "pass"]
+# `make build` keeps a copy of its own run_results, because other dbt commands
+# (`dbt docs generate` in particular) overwrite target/run_results.json with results
+# whose status is "success" rather than the "pass"/"fail"/"warn" of a real test run.
+TEST_STATES = {"pass", "fail", "error", "warn", "skipped"}
+saved = ROOT / "dbt" / "target" / "last_build_results.json"
+latest = ROOT / "dbt" / "target" / "run_results.json"
+
+run_results = saved if saved.exists() else latest
+payload = json.loads(run_results.read_text()) if run_results.exists() else None
+tests = [] if payload is None else [r for r in payload["results"] if r["unique_id"].startswith("test.")]
+
+if tests and all(r["status"] in TEST_STATES for r in tests):
+    failed = [r for r in tests if r["status"] in ("fail", "error")]
+    warned = [r for r in tests if r["status"] == "warn"]
     label = "✅ 全テスト合格" if not failed else f"❌ {len(failed)} 件失敗"
+    if warned and not failed:
+        label = f"⚠️ {len(warned)} 件の警告"
     st.metric("dbt テスト（最新ビルド）", f"{len(tests) - len(failed)} / {len(tests)}", label, delta_color="off")
     if failed:
         st.error("\n".join(r["unique_id"] for r in failed))
+else:
+    st.info("テスト結果がまだありません。`make build` を実行してください。")
 
 # --- cleaning summary ---------------------------------------------------------------------
 st.subheader("クリーニングで除外した行")
