@@ -20,7 +20,7 @@ import duckdb
 import pandas as pd
 
 from . import db, semantic
-from .llm import DeepSeekClient, LLMClient, Usage
+from .llm import ChatClient, LLMClient, Usage
 from .sql_guard import UnsafeSQLError, guard_sql
 
 MAX_ATTEMPTS = 3
@@ -101,7 +101,7 @@ class AssistantResult:
 
 class Assistant:
     def __init__(self, llm: LLMClient | None = None, run_sql=db.query, log_path: Path | None = LOG_PATH):
-        self.llm = llm or DeepSeekClient()
+        self.llm = llm or ChatClient()
         self.run_sql = run_sql
         self.log_path = log_path
         self.allowed = semantic.allowed_tables()

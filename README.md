@@ -4,8 +4,10 @@ POS データから日次・月次の物価指数を作り、自然言語で分�
 ナウキャストの「データサービス」（オルタナティブデータ → 指数）と「データ AI ソリューション」（LLM によるデータ活用）を、公開データで小さく再現しました。
 
 - データ：[UCI Online Retail II](https://archive.ics.uci.edu/dataset/502/online+retail+ii)（英国のギフト卸, 2009-12〜2011-12, 1,067,371 行, CC BY 4.0）
-- 技術：Python / DuckDB / dbt / Streamlit / DeepSeek API（OpenAI 互換）
+- 技術：Python / DuckDB / dbt / Streamlit + 任意の OpenAI 互換 LLM API
 - dbt の接続先を切り替えれば同じモデルを Snowflake でも実行できます（`dbt/profiles.yml` の `snowflake` target）
+
+![ダッシュボードのトップ画面](docs/screenshots/01-home.png)
 
 ## 構成
 
@@ -26,11 +28,41 @@ make ingest      # xlsx → DuckDB（初回のみ約 2 分）
 make build       # dbt seed + run + test
 make test        # Python の単体テスト（ネットワーク不要）
 make app         # http://localhost:8501
-make eval        # AI アシスタントの評価（DeepSeek API を使用）
+make eval        # AI アシスタントの評価（LLM API を使用）
 make docs        # dbt のリネージ図
 ```
 
-`.env` に `DEEPSEEK_API_KEY` / `DEEPSEEK_BASE_URL` / `DEEPSEEK_MODEL` が必要です（アシスタントのみ）。
+### LLM の設定（AI アシスタントを使う場合のみ）
+
+`.env.example` を `.env` にコピーして 3 つの変数を設定します。**OpenAI 互換の API であれば何でも使えます**。
+
+```bash
+cp .env.example .env
+```
+
+```bash
+LLM_API_KEY=sk-your-key-here
+LLM_BASE_URL=https://api.deepseek.com
+LLM_MODEL=deepseek-chat
+```
+
+| プロバイダ | `LLM_BASE_URL` | `LLM_MODEL` の例 |
+|---|---|---|
+| DeepSeek | `https://api.deepseek.com` | `deepseek-chat` |
+| OpenAI | `https://api.openai.com/v1` | `gpt-4o-mini` |
+| Moonshot（Kimi） | `https://api.moonshot.cn/v1` | `moonshot-v1-8k` |
+| Qwen（DashScope） | `https://dashscope.aliyuncs.com/compatible-mode/v1` | `qwen-plus` |
+| 智譜 GLM | `https://open.bigmodel.cn/api/paas/v4` | `glm-4-plus` |
+| Groq | `https://api.groq.com/openai/v1` | `llama-3.3-70b-versatile` |
+| OpenRouter | `https://openrouter.ai/api/v1` | `anthropic/claude-sonnet-4.5` |
+| Ollama（ローカル） | `http://localhost:11434/v1` | `qwen2.5:14b` |
+
+JSON モード（`response_format`）に対応していないプロバイダでは `LLM_JSON_MODE=off` を設定してください。
+プロンプトで JSON を要求する方式に切り替わります。
+以下の画面と評価結果は `deepseek-chat` で取得したものです。
+
+（README のスクリーンショットは、アプリを起動した状態で
+`uv run --with playwright python scripts/capture_screenshots.py` を実行すると再生成できます。）
 
 ## データを見て分かったこと・判断したこと
 
@@ -46,9 +78,34 @@ make docs        # dbt のリネージ図
 
 結果：物価指数は 2009-12 = 100 に対し 2011-11 に 104.7（2 年で +4.7%）。
 
+### 計算方法の違いが結論を変える
+
+![日次物価指数の3つの計算方法](docs/screenshots/02-price-index.png)
+
+同じデータでも、日々の変化を連鎖させると指数は 2 年で 218 まで膨らみます（オレンジ）。
+単純平均単価（緑）は構成変化でこれだけ振れます。ヘッドライン（青）は前月価格と比較して月次指数に接続する方式です。
+
+### どの商品が物価を動かしたか
+
+![カテゴリ別指数と商品別寄与度](docs/screenshots/03-contributions.png)
+
+月ごとの指数変化を商品×チャネル単位に分解します。寄与度の合計が指数の変化と一致することは dbt テストで検証しています。
+
+### データ品質
+
+![クリーニングで除外した行](docs/screenshots/04-cleaning.png)
+
+除外した行は削除せず、理由を付けて保持しています（取込行数 = 採用 + 除外 をテストで照合）。
+
+![日次データ量モニタリング](docs/screenshots/05-quality-monitor.png)
+
+行数が「同じ曜日の過去 4 週平均」の半分を下回った日にアラート（赤い▼）。19 日のうち 14 日が年末年始に集中しています。
+
 ## AI アシスタントの設計
 
-LLM の出力は「信用しない入力」として扱います。
+![AIアシスタントの回答と数値検証](docs/screenshots/06-assistant.png)
+
+LLM の出力は「信用しない入力」として扱います。回答中の数値は結果セルと突合し、一致したものに ✅ を付けます。
 
 1. **意味層**（`assistant/semantic_layer.yml`）：使ってよいテーブル・列の意味・集計できない列（`customers` など）を定義。実際の DB と一致するかをテストで検査
 2. **SQL の安全検査**（`assistant/sql_guard.py`）：構文解析（sqlglot）で SELECT 1 文のみ許可。DDL/DML・`COPY`・`ATTACH`・`read_csv()` 等のファイル読み込み・許可外テーブルを拒否し、行数上限を付与
