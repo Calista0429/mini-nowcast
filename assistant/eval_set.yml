@@ -1,0 +1,89 @@
+# Text-to-SQL eval. Each case has a gold query; a prediction passes when every number in the
+# gold result also appears in the prediction's result (1% tolerance). `expect: decline` cases
+# pass only when the assistant refuses instead of guessing.
+cases:
+  - id: total_revenue_2011
+    question: 2011年の総売上はいくら？
+    gold: select sum(revenue_gbp) from marts.mart_sales_daily where year(sale_date) = 2011
+  - id: best_month_2011
+    question: 2011年で売上が一番多かった月は？
+    gold: |
+      select sum(revenue_gbp) from marts.mart_sales_daily where year(sale_date) = 2011
+      group by date_trunc('month', sale_date) order by 1 desc limit 1
+  - id: top_country_ex_uk
+    question: Excluding the UK, which country generated the most revenue overall?
+    gold: |
+      select sum(revenue_gbp) from marts.mart_sales_daily where country <> 'United Kingdom'
+      group by country order by 1 desc limit 1
+  - id: country_count
+    question: 有多少个国家有过销售记录？
+    gold: select count(distinct country) from marts.mart_sales_daily
+  - id: index_nov_2011
+    question: 2011年11月の物価指数はいくつ？
+    gold: select price_index from marts.mart_price_index_monthly where period = date '2011-11-01'
+  - id: index_change_2011
+    question: How much did the overall price index change from January 2011 to November 2011, in percent?
+    gold: |
+      select max(price_index) filter (where period = date '2011-11-01')
+           / max(price_index) filter (where period = date '2011-01-01') - 1
+      from marts.mart_price_index_monthly
+  - id: biggest_monthly_rise
+    question: 物价指数环比涨幅最大的是哪个月？
+    gold: select period, log_change from marts.mart_price_index_monthly order by log_change desc limit 1
+  - id: category_most_inflation
+    question: 2011年1月から11月にかけて、価格の上昇率が最も高かったカテゴリは？
+    gold: |
+      select max(price_index) filter (where period = date '2011-11-01')
+           / max(price_index) filter (where period = date '2011-01-01') - 1 as chg
+      from marts.mart_category_price_index_monthly group by category order by chg desc limit 1
+  - id: christmas_revenue_2010
+    question: What was revenue for the seasonal_christmas category in 2010?
+    gold: |
+      select sum(revenue_gbp) from marts.mart_sales_daily
+      where category = 'seasonal_christmas' and year(sale_date) = 2010
+  - id: category_revenue_share_2011
+    question: 2011年売上に占めるhome_decorカテゴリの割合は？
+    gold: |
+      select sum(revenue_gbp) filter (where category = 'home_decor') / sum(revenue_gbp)
+      from marts.mart_sales_daily where year(sale_date) = 2011
+  - id: top_contributor_nov_2011
+    question: 2011年11月の物価上昇に最も寄与した商品は？
+    gold: |
+      select contribution from marts.mart_price_contributions_monthly
+      where month = date '2011-11-01' order by contribution desc limit 1
+  - id: volume_drop_days
+    question: 数据量异常下降被标记了多少天？
+    gold: select count(*) from marts.mart_data_quality_daily where is_volume_drop
+  - id: cancellation_lines
+    question: How many lines were removed as cancellations during cleaning?
+    gold: select line_count from marts.mart_cleaning_summary where outcome = 'cancellation'
+  - id: kept_share
+    question: クリーニング後に残った行の割合は？
+    gold: select share_of_lines from marts.mart_cleaning_summary where outcome = 'kept'
+  - id: busiest_weekday
+    question: 哪个星期几的平均日销售额最高？
+    gold: |
+      select avg(rev) from (
+        select sale_date, sum(revenue_gbp) rev from marts.mart_sales_daily group by 1)
+      group by dayname(sale_date) order by 1 desc limit 1
+  - id: daily_index_last
+    question: What is the latest value of the daily price index?
+    gold: |
+      select price_index from marts.mart_price_index_daily
+      where price_index is not null order by sale_date desc limit 1
+  - id: chain_drift_gap
+    question: 最終日時点で、日次連鎖指数とヘッドラインの日次指数の差はいくつ？
+    gold: |
+      select chained_daily_index - price_index from marts.mart_price_index_daily
+      order by sale_date desc limit 1
+  - id: units_nov_2011
+    question: How many units were sold in November 2011?
+    gold: |
+      select sum(units_sold) from marts.mart_sales_daily
+      where sale_date >= date '2011-11-01' and sale_date < date '2011-12-01'
+  - id: decline_profit
+    question: 2011年の営業利益率は？
+    expect: decline
+  - id: decline_forecast_weather
+    question: 明天伦敦会下雨吗？
+    expect: decline

@@ -1,0 +1,17 @@
+stock_code,reason
+POST,postage
+DOT,postage
+C2,postage
+M,manual_adjustment
+D,discount
+S,samples
+B,bad_debt_adjustment
+BANK CHARGES,fee
+AMAZONFEE,fee
+CRUK,fee
+ADJUST,manual_adjustment
+ADJUST2,manual_adjustment
+PADS,manual_adjustment
+TEST001,test_product
+TEST002,test_product
+SP1002,manual_adjustment

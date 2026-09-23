@@ -1,0 +1,11 @@
+version: 2
+models:
+  - name: stg_online_retail
+    description: Typed and renamed raw lines; overlapping week de-duplicated across sheets.
+    columns:
+      - name: invoice_no
+        tests: [not_null]
+      - name: stock_code
+        tests: [not_null]
+      - name: sale_date
+        tests: [not_null]

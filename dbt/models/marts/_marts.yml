@@ -1,0 +1,52 @@
+version: 2
+models:
+  - name: mart_price_index_monthly
+    description: Headline monthly price index (chained Törnqvist, first chained month relative to 2009-12 = 100).
+    columns:
+      - name: period
+        description: First day of the month.
+        tests: [unique, not_null]
+      - name: price_index
+        description: Price level, 2009-12 = 100.
+        tests:
+          - not_null
+          - between: {arguments: {min_value: 50, max_value: 200}}
+      - name: log_change
+        description: Log change of the price level versus the previous month.
+      - name: matched_products
+        description: Products sold in both months that entered the index.
+  - name: mart_price_index_daily
+    description: Daily price index (month-linked Törnqvist, 2009-12 = 100) with two naive alternatives for comparison.
+    columns:
+      - name: sale_date
+        tests: [unique, not_null]
+      - name: price_index
+        description: Month-linked daily Törnqvist, 2009-12 = 100. Null in Dec 2009 (no base month).
+        tests:
+          - between: {arguments: {min_value: 50, max_value: 200}}
+      - name: chained_daily_index
+        description: Day-to-day chained Törnqvist. Shown only to illustrate chain drift.
+      - name: naive_index
+        description: Average unit price across everything sold, first day = 100. Driven by product mix.
+  - name: mart_category_price_index_monthly
+    description: Monthly Törnqvist price index per product category.
+    tests:
+      - unique_combination: {arguments: {columns: [category, period]}}
+  - name: mart_price_contributions_monthly
+    description: Per-product contribution to each month's index change; sums to the month's log_change.
+    tests:
+      - unique_combination: {arguments: {columns: [month, stock_code, price_channel]}}
+  - name: mart_sales_daily
+    description: Daily revenue, units, invoices and customers by product category and country (GBP).
+    tests:
+      - unique_combination: {arguments: {columns: [sale_date, category, country]}}
+    columns:
+      - name: revenue_gbp
+        tests: [not_null]
+  - name: mart_cleaning_summary
+    description: Lines and revenue removed by each cleaning rule.
+  - name: mart_data_quality_daily
+    description: Daily data-health metrics and alert flags.
+    columns:
+      - name: sale_date
+        tests: [unique]

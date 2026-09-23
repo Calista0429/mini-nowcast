@@ -1,0 +1,35 @@
+version: 2
+models:
+  - name: int_sales_lines_flagged
+    description: All staged lines plus the first rule that excludes each one (null = kept).
+    columns:
+      - name: exclusion_reason
+        tests:
+          - accepted_values:
+              arguments:
+                values: [cancellation, non_positive_quantity, non_positive_price, missing_description,
+                         'non_product:postage', 'non_product:manual_adjustment', 'non_product:discount',
+                         'non_product:samples', 'non_product:bad_debt_adjustment', 'non_product:fee',
+                         'non_product:test_product', 'non_product:gift_voucher', 'non_product:marketplace_listing']
+  - name: int_sales_lines_clean
+    description: Sellable product lines only.
+    columns:
+      - name: quantity
+        tests:
+          - between: {arguments: {min_value: 1, max_value: 1000000}}
+      - name: unit_price
+        tests:
+          - between: {arguments: {min_value: 0.001, max_value: 100000}}
+  - name: int_products
+    description: One row per product with canonical description and keyword category.
+    columns:
+      - name: stock_code
+        tests: [unique, not_null]
+      - name: category
+        tests: [not_null]
+  - name: int_product_daily
+    tests:
+      - unique_combination: {arguments: {columns: [period, item_id]}}
+  - name: int_product_monthly
+    tests:
+      - unique_combination: {arguments: {columns: [period, item_id]}}

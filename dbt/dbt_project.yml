@@ -1,0 +1,32 @@
+name: mini_nowcast
+version: "1.0.0"
+profile: mini_nowcast
+config-version: 2
+
+model-paths: ["models"]
+seed-paths: ["seeds"]
+macro-paths: ["macros"]
+test-paths: ["tests"]
+
+vars:
+  # Price relatives beyond this log-ratio are treated as data errors, not price changes
+  # (ln(3): a product tripling or dropping to a third of its price between two periods).
+  max_abs_log_price_ratio: 1.0986
+  # A day is flagged when its clean row count drops below this share of the same-weekday 4-week mean.
+  volume_drop_threshold: 0.5
+
+models:
+  mini_nowcast:
+    staging:
+      +materialized: view
+      +schema: staging
+    intermediate:
+      +materialized: table
+      +schema: intermediate
+    marts:
+      +materialized: table
+      +schema: marts
+
+seeds:
+  mini_nowcast:
+    +schema: ref

@@ -1,0 +1,12 @@
+version: 2
+sources:
+  - name: raw
+    schema: raw
+    tables:
+      - name: online_retail
+        description: UCI Online Retail II, both workbook sheets stacked as-is.
+        columns:
+          - name: Invoice
+            tests: [not_null]
+          - name: InvoiceDate
+            tests: [not_null]

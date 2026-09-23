@@ -1,0 +1,18 @@
+mini_nowcast:
+  target: dev
+  outputs:
+    dev:
+      type: duckdb
+      path: "{{ env_var('MINI_NOWCAST_DB', 'data/mini_nowcast.duckdb') }}"
+      threads: 4
+    # Same models run on Snowflake by switching target (dbt run --target snowflake)
+    snowflake:
+      type: snowflake
+      account: "{{ env_var('SNOWFLAKE_ACCOUNT', '') }}"
+      user: "{{ env_var('SNOWFLAKE_USER', '') }}"
+      password: "{{ env_var('SNOWFLAKE_PASSWORD', '') }}"
+      role: "{{ env_var('SNOWFLAKE_ROLE', 'TRANSFORMER') }}"
+      warehouse: "{{ env_var('SNOWFLAKE_WAREHOUSE', 'COMPUTE_WH') }}"
+      database: "{{ env_var('SNOWFLAKE_DATABASE', 'MINI_NOWCAST') }}"
+      schema: public
+      threads: 4

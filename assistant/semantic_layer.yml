@@ -1,0 +1,114 @@
+# The only tables the assistant may query, with the business meaning of every column.
+# tests/test_semantic_layer.py checks this file against the real database so it cannot drift.
+dataset:
+  name: UK online gift wholesaler (UCI Online Retail II), cleaned
+  currency: GBP
+  date_range: 2009-12-01 to 2011-12-09 (December 2011 is a partial month)
+  notes:
+    - No trading on Saturdays; missing dates are normal, not data gaps.
+    - Categories are assigned from product-description keywords; "other" means no keyword matched.
+    - Price indices use 2009-12 = 100. A value of 104.7 means prices are 4.7% higher than in 2009-12.
+
+tables:
+  marts.mart_sales_daily:
+    grain: one row per sale_date x category x country
+    columns:
+      sale_date: trading date
+      category: product category
+      country: customer country
+      revenue_gbp: sales value in GBP after cleaning (additive)
+      units_sold: units sold (additive)
+      invoices: distinct invoices in the row (NOT additive across categories - one invoice can span several)
+      customers: distinct registered customers in the row (NOT additive across rows)
+      products_sold: distinct products sold in the row (NOT additive across rows)
+
+  marts.mart_price_index_monthly:
+    grain: one row per month (period = first day of month), 2010-01 to 2011-11
+    columns:
+      period: first day of the month
+      price_index: overall price level, 2009-12 = 100 (monthly chained Törnqvist)
+      log_change: log change vs previous month; percent change = exp(log_change) - 1
+      matched_products: items sold in both months that entered the calculation
+      outliers_trimmed: price relatives discarded as data errors
+
+  marts.mart_category_price_index_monthly:
+    grain: one row per category x month
+    columns:
+      category: product category
+      period: first day of the month
+      price_index: category price level, 2009-12 = 100
+      log_change: log change vs previous month
+      matched_products: items in the category sold in both months
+      outliers_trimmed: price relatives discarded as data errors
+
+  marts.mart_price_index_daily:
+    grain: one row per trading day
+    columns:
+      sale_date: trading date
+      price_index: headline daily price level, 2009-12 = 100 (null during Dec 2009)
+      matched_products: items compared against the previous month's prices
+      outliers_trimmed: price relatives discarded as data errors
+      chained_daily_index: day-to-day chained index; drifts upward, for methodology comparison only
+      naive_index: average unit price indexed to the first day; distorted by product mix, comparison only
+      avg_unit_price: average unit price of everything sold that day (GBP)
+
+  marts.mart_price_contributions_monthly:
+    grain: one row per month x product x price channel
+    columns:
+      month: first day of the month
+      stock_code: product code
+      price_channel: registered (wholesale customer) or unregistered (no customer ID, higher prices)
+      description: product name
+      category: product category
+      price_prev: unit price in the previous month (GBP)
+      price_t: unit price in this month (GBP)
+      price_change_pct: price change vs previous month as a fraction (0.05 = +5%)
+      weight: item's weight in the index
+      contribution: item's contribution to the monthly index log change (sums to log_change per month)
+
+  marts.mart_data_quality_daily:
+    grain: one row per trading day
+    columns:
+      sale_date: trading date
+      staged_lines: raw lines received
+      clean_lines: lines kept after cleaning
+      products_sold: distinct products in clean lines
+      baseline_lines: average clean lines on the same weekday over the previous 4 weeks
+      price_outliers: day-over-day price relatives flagged as outliers
+      is_volume_drop: true when clean_lines fell below half of baseline_lines
+      excluded_share: share of raw lines removed by cleaning
+
+  marts.mart_cleaning_summary:
+    grain: one row per cleaning outcome
+    columns:
+      outcome: kept, or the reason a line was excluded
+      line_count: number of lines
+      line_amount_gbp: value of those lines in GBP
+      share_of_lines: share of all lines
+
+category_values:
+  - bags_storage
+  - home_decor
+  - home_fragrance_lighting
+  - jewellery_accessories
+  - kitchen_tableware
+  - seasonal_christmas
+  - seasonal_easter
+  - stationery_gift_wrap
+  - toys_kids
+  - other
+
+examples:
+  - question: 2011年の月別売上は？
+    sql: |
+      select date_trunc('month', sale_date) as month, sum(revenue_gbp) as revenue_gbp
+      from marts.mart_sales_daily
+      where sale_date >= date '2011-01-01'
+      group by 1 order by 1
+  - question: Which categories saw the largest price increase over 2011?
+    sql: |
+      select category,
+             max(price_index) filter (where period = date '2011-11-01')
+           / max(price_index) filter (where period = date '2011-01-01') - 1 as change
+      from marts.mart_category_price_index_monthly
+      group by 1 order by 2 desc

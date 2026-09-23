@@ -1,0 +1,10 @@
+.env
+.venv/
+data/
+!data/.gitkeep
+dbt/target/
+dbt/logs/
+dbt/dbt_packages/
+__pycache__/
+*.pyc
+dbt/.user.yml
