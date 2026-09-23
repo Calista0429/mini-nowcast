@@ -14,6 +14,7 @@ CROPS = {
     # name: (source file, box) - boxes are in the 2880x1840 screenshot coordinate space
     "home": ("01-home.png", (600, 200, 2860, 700)),        # title + KPI row, without the sidebar
     "assistant": ("06-assistant.png", (760, 650, 2740, 1072)),  # answer + the ✅ verification row
+    "index_methods": ("02-price-index.png", (760, 800, 2730, 1700)),  # the three-method daily chart, incl. the x-axis labels
 }
 
 
